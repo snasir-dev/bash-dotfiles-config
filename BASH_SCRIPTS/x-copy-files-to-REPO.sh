@@ -9,6 +9,11 @@
 # USAGE: Run this script from the directory containing the files you want to copy
 # ==============================================================================
 
+# Set the trap at the very beginning of the script
+# The trap command in Bash automatically runs a piece of code whenever the script exits, for any reason. We want to know the exit code status (what code fzf returns if say we press ESC or CTRL+C)
+# $?: This special shell variable always holds the exit code of the last command that finished.
+trap 'echo "DEBUG: Script exited with EXIT-CODE $?"' EXIT
+
 # Exit immediately if a command exits with a non-zero status
 set -e
 
@@ -55,17 +60,20 @@ echo ""
 # SELECTED_REPO=$(fd --base-directory $REPOS_DIR -t d --hidden --glob '.git' -E 'Git' -E '**/android/**' -x dirname {} | sort | fzf \
 #     --prompt '(Choose REPOSITORY to COPY FILES to (Searching in Base Directory: $REPOS_DIR) > ' --height 50%)
 
-SELECTED_REPO=$(fd -t d --hidden --glob '.git' "$REPOS_DIR" \
+# Check if user selected a repository (SELECTED_REPO is not empty)
+if SELECTED_REPO=$(fd -t d --hidden --glob '.git' "$REPOS_DIR" \
     -E 'Git' -E '**/android/**' -x dirname {} | sort \
-    | fzf --prompt '(Choose REPOSITORY to COPY FILES to) >' --height 50%)
+    | fzf --prompt '(Choose REPOSITORY to COPY FILES to) >' --height 50%); then
 
-# Check if user cancelled (pressed Esc or Ctrl+C)
-if [ -z "$SELECTED_REPO" ]; then
+    # This block only runs if fzf exits with code 0 (success)
+    # If it exists with non-zero (CTRL+C = 127, ESC = 130, or other reason), it will run else condition.
+    echo "✓ Selected repository: $SELECTED_REPO"
+else
+    exit_code=$? # <-- Save the exit code immediately
     echo "❌ No repository selected. Exiting."
-    exit 1
+    exit "$exit_code"
 fi
 
-echo "✓ Selected repository: $SELECTED_REPO"
 echo ""
 
 # ------------------------------------------------------------------------------

@@ -153,7 +153,7 @@ echo ""
 # $HOME expands to our home directory
 # : is the path separator in PATH
 # $PATH appends the existing PATH value
-export PATH="$BASH_DIR/scripts:$PATH"
+export PATH="$BASH_DIR/BASH_SCRIPTS:$PATH"
 
 # Source local machine-specific settings
 # These settings shouldn't be in version control

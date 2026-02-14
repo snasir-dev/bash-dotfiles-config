@@ -16,7 +16,7 @@
 # SCRIPT ALIASES    #
 #====================
 # Specify the path to your scripts directory
-SCRIPTS_DIR="$BASH_DIR/scripts"
+SCRIPTS_DIR="$BASH_DIR/BASH_SCRIPTS"
 alias {scripts,x,X}='$SCRIPTS_DIR/x-script-selector.sh'
 
 #====================================================================
@@ -150,7 +150,7 @@ alias "kgns"="kubectl config view --minify | grep namespace"
 
 # Note - must have script x-k8s-kube-info.sh in the scripts directory to run this alias.
 # I have added all scripts to PATH. Can directly call the script by just stating "x-k8s-kube-info". No need for alias
-# alias x-k8s-kube-info="$BASH_DIR/scripts/x-k8s-kube-info.sh"
+# alias x-k8s-kube-info="$BASH_DIR/BASH_SCRIPTS/x-k8s-kube-info.sh"
 
 #===========================
 # GREP + SEARCH ALIASES    #
