@@ -49,7 +49,14 @@ x-script-selector() {
 
     # 4. If a script was selected, execute it
     if [[ -n "$selected_script" ]]; then
-        echo "▶️  Executing: $(basename "$selected_script")"
+        # echo ""
+        echo "✅ Script selected: $selected_script"
+        echo "▶️  Executing Script: $(basename "$selected_script")"
+        echo "====================================================="
+        # Add a newline
+        echo
+        # echo -e "\n"
+
         # Execute the script, passing along any arguments that are provided to the `scripts` command
         "$selected_script" "$@"
     else
