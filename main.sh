@@ -27,7 +27,7 @@ fi
 # =====================================================================================
 # Helper: safely source all '.sh' files under a directory and its sub-directories
 # Arguments:
-#   $1 = label (used for debug messages: env/functions/aliases/completions/plugins)
+#   $1 = label (used for debug messages: env/functions/aliases/completions/tools)
 #   $2 = base directory to search within
 # =====================================================================================
 source_sh_files() {
@@ -177,9 +177,10 @@ else
 fi
 
 # ======================================================================
-# Source all scripts in plugins (except excluded files or directories)
+# Source all scripts in tools (except excluded files or directories)
 # ======================================================================
-source_sh_files "Plugin/Tool/Module/Package" "$BASH_DIR/plugins"
+# Previous name for tools: Plugin /Tool / Module / Package
+source_sh_files "Tools: CLI Tools Config Files" "$BASH_DIR/tools"
 echo ""
 
 # Run fastfetch when a new interactive shell starts

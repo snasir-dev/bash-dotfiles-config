@@ -5,7 +5,7 @@
 
 # SOURCE DEPENDENCIES - SCRIPTS DO NOT SOURCE .bashrc by default. Only exported VARIABLES are available
 
-source "$BASH_DIR/plugins/file-management/fzf.sh" # Used in create_symlink to get absolute path.
+source "$BASH_DIR/tools/file-management/fzf.sh" # Used in create_symlink to get absolute path.
 
 # Set the trap at the very beginning of the script
 # The trap command in Bash automatically runs a piece of code whenever the script exits, for any reason. We want to know the exit code status (what code fzf returns if say we press ESC or CTRL+C)
