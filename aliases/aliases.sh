@@ -93,7 +93,7 @@ alias ".REPO_general_repo"='cd $WORKSPACE_DIR/@REPOS/GENERAL_REPO'
 alias ".REPO_fullstack-react-net-app"='cd $WORKSPACE_DIR/@REPOS/@APPS/fullstack/Fullstack.React.NET.App'
 alias ".REPO_shared-resources-repo"='cd $WORKSPACE_DIR/@REPOS/@SHARED_RESOURCES_REPO'
 alias ".REPO_bash"='cd $BASH_DIR'
-alias ".REPO_orbz-cli"='cd $WORKSPACE_DIR/@REPOS/SHELLS_AND_CLI_TOOLS/CLI_TOOLS/orbz-cli'
+alias ".REPO_orbz-cli"='cd $WORKSPACE_DIR/@REPOS/\SCRIPTS_SHELLS_CLI_TOOLS/CLI_TOOLS/orbz-cli'
 alias ".REPO_obsidian_main_vault"='cd $HOME/Documents/@OBSIDIAN/@MAIN_VAULT'
 
 # Visual File Directory - Tree like structure
