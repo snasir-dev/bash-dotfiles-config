@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# IMPORTANT NOTE:  $BASH_DIR is set inside config/setup/.bashrc
+
 # Main BASH configuration file that will be sourced by the .bashrc file.
 # This file acts as the central point for sourcing all custom configurations from $BASH_DIR directory.
 # The .bashrc file will be very simple, it will only source this file.
