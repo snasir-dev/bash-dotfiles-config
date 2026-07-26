@@ -41,7 +41,7 @@ print_command_output() {
 # all defined functions in a clean, formatted table with Name | Description | Parameters | Example | File.
 # Color-coded with bold orange headers matching git.sh styling.
 
-list_functions_table() {
+function_list_all_table() {
     # Color definitions matching git.sh styling
     local BOLD_ORANGE='\033[1;38;2;249;179;0m'
     local RESET='\033[0m'
@@ -157,5 +157,5 @@ list_functions_table() {
 
 # Export specific functions so child bash processes inherit them
 # Note this only works for scripts with "/bin/bash" shebang. Other shells like "/bin/sh" will not have access to these functions.
-export -f largest oldfiles dirsummary print_command_output list_functions_table
+export -f largest oldfiles dirsummary print_command_output function_list_all_table
 
