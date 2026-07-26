@@ -38,7 +38,7 @@ print_command_output() {
 
 # LIST ALL FUNCTIONS IN A FORMATTED TABLE
 # This function scans all .sh files in the functions directory and displays
-# all defined functions in a clean, formatted table with File | Name | Description | Parameters | Example.
+# all defined functions in a clean, formatted table with Name | Description | Parameters | Example | File.
 # Color-coded with bold orange headers matching git.sh styling.
 
 list_functions_table() {
@@ -69,7 +69,7 @@ list_functions_table() {
 
     # Header row, plus one row per function found below (all in-memory —
     # no per-function subprocesses, which is what made this slow before).
-    local rows=("FILE NAME|FUNCTION NAME|DESCRIPTION|PARAMETERS|EXAMPLE")
+    local rows=("FUNCTION NAME|DESCRIPTION|PARAMETERS|EXAMPLE|FILE NAME")
     local comment_buffer=()
     local file file_name line
 
@@ -125,7 +125,7 @@ list_functions_table() {
                 example="${example:0:50}"
                 [ -z "$example" ] && example="$func_name"
 
-                rows+=("${file_name}|${func_name}|${description}|${parameters}|${example}")
+                rows+=("${func_name}|${description}|${parameters}|${example}|${file_name}")
                 comment_buffer=()
             else
                 comment_buffer=() # real code line: doc block above no longer applies
