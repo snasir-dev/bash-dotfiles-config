@@ -67,11 +67,41 @@ claude() {
 
 # --- ALIASES ---
 
+# SHORTHAND: identical behavior to the claude() function above (plan mode
+# injection + management-subcommand passthrough) -- just less typing. Aliasing
+# to a shell function name works fine in bash: alias expansion is a text
+# substitution that happens before the function lookup.
+# shellcheck disable=SC2139
+alias {cc,CC}='claude'
+
 # ESCAPE HATCH: run the stock `claude` binary with ZERO injected flags.
 # `command` bypasses both shell functions and aliases, so this reaches the real
 # executable even though the claude() function above shadows the name `claude`.
 # (Typing `command claude ...` by hand does exactly the same thing.)
-alias claude-default="command claude"
+# shellcheck disable=SC2139
+alias {claude-default,ccdefault}='command claude'
+
+# FAST LANE: skips plan-mode injection entirely (bare `command claude`, like
+# claude-default) and launches directly on Sonnet 5 with thinking disabled --
+# built for quick throwaway questions where near-instant replies matter more
+# than deep reasoning, while staying more reliable than Haiku. Not for coding
+# tasks.
+#   MAX_THINKING_TOKENS=0    -- disables extended thinking for this invocation
+#                               only (no global env var, no --thinking flag
+#                               exists in this CLI version to do this directly)
+#   --model sonnet            -- near-Opus quality at Sonnet cost/speed --
+#                               chosen over Haiku for reliability
+#   --effort medium           -- there is no "default" value for --effort
+#                               (only low/medium/high/xhigh/max exist); left
+#                               unset, this silently inherits whatever effort
+#                               level is pinned in your normal Claude Code
+#                               settings (xhigh via settings.json) -- explicit low is the
+#                               only way to force it down for this fast lane
+#   --permission-mode auto    -- lets Claude Code's own risk classifier
+#                               decide per-action whether to prompt, instead
+#                               of falling through to the stock default
+# shellcheck disable=SC2139
+alias {claude-fast,ccfast}='MAX_THINKING_TOKENS=0 command claude --model sonnet --effort medium --permission-mode auto'
 
 # --- COMPLETIONS ---
 
