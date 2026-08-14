@@ -19,6 +19,20 @@
 SCRIPTS_DIR="$BASH_DIR/BASH_SCRIPTS"
 alias {scripts,x,X}='$SCRIPTS_DIR/x-script-selector.sh'
 
+# YAZI-based selector (functions AND scripts, browsed with your normal Yazi keys).
+# Must be a FUNCTION, not a plain alias: x-script-selector-YAZI.sh writes the chosen
+# command to $BASH_SELECTOR_CMD, and we `source` it HERE so any `cd`/env changes made
+# by the selected function/script persist in THIS shell instead of a subshell.
+x-script-selector-yazi() {
+    export BASH_SELECTOR_CMD="${TMPDIR:-/tmp}/bash-selector-cmd.$$"
+    : > "$BASH_SELECTOR_CMD"
+    "$SCRIPTS_DIR/x-script-selector-YAZI.sh" "$@"
+    [[ -s "$BASH_SELECTOR_CMD" ]] && source "$BASH_SELECTOR_CMD"
+    rm -f "$BASH_SELECTOR_CMD"
+    unset BASH_SELECTOR_CMD
+}
+alias {yscripts,xy,XY}='x-script-selector-yazi'
+
 #====================================================================
 # FILE INFORMATION & LISTING & DIRECTORY NAVIGATION ALIASES         #
 #====================================================================

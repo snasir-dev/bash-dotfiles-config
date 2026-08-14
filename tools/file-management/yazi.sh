@@ -126,6 +126,10 @@ function yap() {
 }
 # # ============================================================================
 
+# NOTE: the Yazi-based bash function/script selector (x-script-selector-YAZI.sh) is
+# deliberately NOT wired up here. Its wrapper + aliases live in aliases/aliases.sh
+# under the "SCRIPT ALIASES" section, next to the x-script-selector aliases.
+
 # --- ALIASES ---
 # This will trigger y() function above instead of the yazi.exe executable. (If for any reason you need to trigger yazi.exe, run command 'command yazi')
 # Remember if you want to exit out of yazi without it changing directory, press Q instead of q

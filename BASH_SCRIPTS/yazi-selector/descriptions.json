@@ -1,0 +1,177 @@
+{
+    "hidden": ["render_tree_level", "_j_update_path_mappings", "_j_tab_complete"],
+
+    "functions": {
+        "largest": {
+            "description_linemode_col": "top-N largest files",
+            "desc": "List the largest files under the current directory, recursively.",
+            "params": "[count=10]",
+            "example": "largest 5"
+        },
+        "oldfiles": {
+            "description_linemode_col": "files older than N days",
+            "desc": "List files under the current directory that are older than the given number of days.",
+            "params": "[days=30]",
+            "example": "oldfiles 60"
+        },
+        "dirsummary": {
+            "description_linemode_col": "file count + total size",
+            "desc": "Print the total file count and total size of the current directory.",
+            "params": "",
+            "example": "dirsummary"
+        },
+        "print_command_output": {
+            "description_linemode_col": "run + print a command, framed",
+            "desc": "Print a command in bold blue, run it via eval, then print a divider.",
+            "params": "<command>",
+            "example": "print_command_output \"kubectl config get-contexts\""
+        },
+        "function_list_all_table": {
+            "description_linemode_col": "table of every function",
+            "desc": "Scan functions/*.sh and print every function in a formatted Name|Description|Parameters|Example|File table.",
+            "params": "",
+            "example": "function_list_all_table"
+        },
+        "get_absolute_path_windows": {
+            "description_linemode_col": "abs path, Windows form",
+            "desc": "Convert a path to its absolute Windows-style path (C:\\...) via cygpath -w.",
+            "params": "[dir_path=.]",
+            "example": "get_absolute_path_windows ."
+        },
+        "get_absolute_path_windows_forwardslashes": {
+            "description_linemode_col": "abs path, Windows w/ forward slashes",
+            "desc": "Convert a path to its absolute mixed Windows path (C:/...) via cygpath -a -m.",
+            "params": "[dir=.]",
+            "example": "get_absolute_path_windows_forwardslashes ."
+        },
+        "get_absolute_path_unix": {
+            "description_linemode_col": "abs path, Unix form",
+            "desc": "Resolve a path to its absolute Unix-style path via readlink -f.",
+            "params": "[dir=.]",
+            "example": "get_absolute_path_unix ."
+        },
+        "pwdw": {
+            "description_linemode_col": "pwd as Windows path",
+            "desc": "Print the current directory as a Windows path with backslashes (C:\\Users\\...).",
+            "params": "",
+            "example": "pwdw"
+        },
+        "pwdwb": {
+            "description_linemode_col": "pwd as Windows path (alias)",
+            "desc": "Wrapper around pwdw with the same output; usable as a callback for functions like copy.",
+            "params": "",
+            "example": "copy pwdwb"
+        },
+        "pwdwf": {
+            "description_linemode_col": "pwd as Windows path, forward slashes",
+            "desc": "Print the current directory as a Windows path with forward slashes (C:/Users/...).",
+            "params": "",
+            "example": "pwdwf"
+        },
+        "create_symlink": {
+            "description_linemode_col": "create a native symlink",
+            "desc": "Create a native Windows symlink (ln -s -f -i -v); -f overwrites, -n handles dir-symlink targets.",
+            "params": "<original_path> <link_path>",
+            "example": "create_symlink original.txt link.txt"
+        },
+        "create_symlink_interactively_with_fzf": {
+            "description_linemode_col": "interactive symlink wizard",
+            "desc": "Prompt step-by-step (with tab/fzf path completion) for an original path and a link path, then create the symlink.",
+            "params": "",
+            "example": "create_symlink_interactively_with_fzf"
+        },
+        "filetree": {
+            "description_linemode_col": "icon tree view of a directory",
+            "desc": "Render a directory as a tree with folder/file icons and box-drawing connectors, directories sorted first.",
+            "params": "[max_depth=1] [show_hidden=false] [directory_path=.]",
+            "example": "filetree 2 true ~/Documents"
+        },
+        "copy": {
+            "description_linemode_col": "run a command, copy its stdout",
+            "desc": "Run the given command (including aliases) and pipe its stdout to the Windows clipboard.",
+            "params": "<command> [args...]",
+            "example": "copy pwdw"
+        },
+        "copy_detailed": {
+            "description_linemode_col": "copy stdout, print command + output",
+            "desc": "Like copy, but also prints the command and up to 500 characters of its output.",
+            "params": "<command> [args...]",
+            "example": "copy_detailed git status"
+        },
+        "push": {
+            "description_linemode_col": "pushd wrapper",
+            "desc": "pushd to a directory (or the current one with no argument), remembering where you came from.",
+            "params": "[directory]",
+            "example": "push /c/temp"
+        },
+        "up": {
+            "description_linemode_col": "cd up N levels",
+            "desc": "Go up N directory levels at once (up 3 == cd ../../..).",
+            "params": "[levels=1]",
+            "example": "up 2"
+        },
+        "popd_at_index": {
+            "description_linemode_col": "popd, optionally by stack index",
+            "desc": "Pop the directory stack (default: the top), or jump to and remove a specific stack index.",
+            "params": "[index]",
+            "example": "popd_at_index 2"
+        },
+        "j": {
+            "description_linemode_col": "jump to an ancestor dir by name",
+            "desc": "cd to a directory named <name> found anywhere in the current path, case-insensitively. Tab-completes.",
+            "params": "<directory_name>",
+            "example": "j Documents"
+        }
+    },
+
+    "scripts": {
+        "x-copy-files-to-REPO.sh": {
+            "description_linemode_col": "sync config files -> repo",
+            "desc": "Dotfiles sync helper: copies modified config files/folders from your system into their matching git repos. Run from the directory containing the files to copy.",
+            "params": "",
+            "example": "x-copy-files-to-REPO.sh"
+        },
+        "x-create-symlinks.sh": {
+            "description_linemode_col": "interactive symlink wizard (fzf)",
+            "desc": "Standalone wrapper around create_symlink_interactively_with_fzf; sources tools/file-management/fzf.sh so CTRL+T path search works.",
+            "params": "",
+            "example": "x-create-symlinks.sh"
+        },
+        "x-lazygit-fix-corrupted-state.sh": {
+            "description_linemode_col": "fix corrupted lazygit state.yml",
+            "desc": "Deletes lazygit's state.yml under %LOCALAPPDATA%\\lazygit, which can get corrupted if the machine crashes while Lazygit is open.",
+            "params": "",
+            "example": "x-lazygit-fix-corrupted-state.sh"
+        },
+        "x-powertoys-run-install-plugin.sh": {
+            "description_linemode_col": "install/update a PowerToys Run plugin",
+            "desc": "Installs (optionally downloading from a GitHub release via gh) a PowerToys Run plugin into the PowerToys Run Plugins folder.",
+            "params": "[github-release-url]",
+            "example": "x-powertoys-run-install-plugin.sh"
+        },
+        "x-script-selector.sh": {
+            "description_linemode_col": "fzf script picker (original)",
+            "desc": "The original fzf-based picker: lists BASH_SCRIPTS/**/*.sh and runs whichever one you select.",
+            "params": "",
+            "example": "x-script-selector.sh"
+        },
+        "x-test-script.sh": {
+            "description_linemode_col": "scratch/demo script",
+            "desc": "Demo script for testing what's available to a standalone script process (only exported vars/functions, per CLAUDE.md).",
+            "params": "",
+            "example": "x-test-script.sh"
+        },
+        "x-initialize-new-git-repo.sh": {
+            "description_linemode_col": "create + push a new private GitHub repo",
+            "desc": "Initializes a new PRIVATE GitHub repo via the gh CLI, checks/prompts for gh auth, adds a README.md if missing, and copies .gitignore/.gitattributes from @SHARED_RESOURCES_REPO.",
+            "params": "",
+            "example": "x-initialize-new-git-repo.sh"
+        },
+        "x-k8s-kube-info.sh": {
+            "description_linemode_col": "print kube cluster info",
+            "desc": "Sources functions/_general-functions.sh and prints cluster-info, current-context, and all clusters/contexts/users.",
+            "params": "",
+            "example": "x-k8s-kube-info.sh"
+        }
+    }
+}
