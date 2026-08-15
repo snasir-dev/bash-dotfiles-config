@@ -14,6 +14,10 @@
 #   ├── index.tsv    kind⇥name⇥realpath⇥line⇥cachepath  (debugging aid only)
 #   ├── index.lua    same data + descriptions.json, dofile'd by the Lua side
 #   └── tree/
+#       ├── Command History/   EMPTY here -- populated lazily, on first entry,
+#       │                      by build-history.sh (see plugin/main.lua). Kept
+#       │                      empty at this stage so `xy` startup cost never
+#       │                      grows with how much history you've accumulated.
 #       ├── Functions/   one generated file per bash function (real source)
 #       └── Scripts/     verbatim copies of BASH_SCRIPTS/**/*.sh
 
@@ -38,7 +42,12 @@ _bash_selector_build_index() {
     echo "🔄  Rebuilding bash-selector cache..." >&2
 
     rm -rf "$cache"
-    mkdir -p "$cache/tree/Functions" "$cache/tree/Scripts"
+    # "Command History" is created empty -- build-history.sh populates it
+    # lazily the first time it's entered in Yazi (see plugin/main.lua), and
+    # its own staleness stamp (history-stamp) lives right here, so wiping the
+    # whole cache on a functions/scripts change just means the very next
+    # "Command History" visit rebuilds it once more -- cheap, and correct.
+    mkdir -p "$cache/tree/Command History" "$cache/tree/Functions" "$cache/tree/Scripts"
     local idx="$cache/index.tsv"
     : > "$idx"
 

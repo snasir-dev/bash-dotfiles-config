@@ -33,6 +33,27 @@ x-script-selector-yazi() {
 }
 alias {yscripts,xy,XY}='x-script-selector-yazi'
 
+# Same idea as x-script-selector-yazi() above, but for the Alt+G keybind in
+# config/bash_keybinds.sh: instead of running the selected command, it's INSERTED
+# at the cursor in your current prompt line (READLINE_LINE/READLINE_POINT) --
+# exactly like fzf's own Ctrl+T widget -- so you can keep typing/editing before
+# pressing Enter yourself. BASH_SELECTOR_INSERT tells x-script-selector-YAZI.sh
+# to skip its own "type args" sub-prompt and leave a trailing space instead.
+x-script-selector-yazi-insert() {
+    export BASH_SELECTOR_CMD="${TMPDIR:-/tmp}/bash-selector-cmd.$$"
+    export BASH_SELECTOR_INSERT=1
+    : > "$BASH_SELECTOR_CMD"
+    "$SCRIPTS_DIR/x-script-selector-YAZI.sh" "$@"
+    if [[ -s "$BASH_SELECTOR_CMD" ]]; then
+        local text
+        text=$(< "$BASH_SELECTOR_CMD")
+        READLINE_LINE="${READLINE_LINE:0:READLINE_POINT}${text}${READLINE_LINE:READLINE_POINT}"
+        READLINE_POINT=$((READLINE_POINT + ${#text}))
+    fi
+    rm -f "$BASH_SELECTOR_CMD"
+    unset BASH_SELECTOR_CMD BASH_SELECTOR_INSERT
+}
+
 #====================================================================
 # FILE INFORMATION & LISTING & DIRECTORY NAVIGATION ALIASES         #
 #====================================================================
