@@ -72,7 +72,7 @@ claude() {
 # to a shell function name works fine in bash: alias expansion is a text
 # substitution that happens before the function lookup.
 # shellcheck disable=SC2139
-alias {cc,CC}='claude'
+alias {cc,CC,CLAUDE}='claude'
 
 # ESCAPE HATCH: run the stock `claude` binary with ZERO injected flags.
 # `command` bypasses both shell functions and aliases, so this reaches the real
