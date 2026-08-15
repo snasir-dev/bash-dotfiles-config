@@ -21,8 +21,11 @@
 #     instead -- see BASH_SELECTOR_INSERT below and config/bash_keybinds.sh.
 #
 # See BASH_SCRIPTS/yazi-selector/ for the cache builder (build-index.sh), the
-# plugin source (plugin/main.lua, synced into ~/.config/yazi/plugins), and
-# descriptions.json -- the file to edit when adding or describing entries.
+# plugin source (plugin/main.lua, synced into ~/.config/yazi/plugins), the
+# hover-description/linemode source (init-snippet.lua, synced into
+# ~/.config/yazi/bash-selector-ui.lua and dofile'd by init.lua's stub -- see
+# that file), and descriptions.json -- the file to edit when adding or
+# describing entries.
 #
 # Usage: x-script-selector-YAZI.sh [--rebuild]
 #   --rebuild   force the cache to regenerate even if nothing looks stale.
@@ -33,6 +36,8 @@ x-script-selector-YAZI() {
     local yazi_home="${YAZI_CONFIG_HOME:-$HOME/.config/yazi}"
     local plug_src="$sel_dir/plugin/main.lua"
     local plug_dst="$yazi_home/plugins/bash-selector.yazi/main.lua"
+    local ui_src="$sel_dir/init-snippet.lua"
+    local ui_dst="$yazi_home/bash-selector-ui.lua"
 
     if [[ ! -f "$sel_dir/descriptions.json" ]]; then
         echo "❌ Error: selector directory not found at '$sel_dir'" >&2
@@ -43,6 +48,13 @@ x-script-selector-YAZI() {
     if [[ ! -f "$plug_dst" ]] || [[ "$plug_src" -nt "$plug_dst" ]]; then
         mkdir -p "$(dirname "$plug_dst")"
         cp "$plug_src" "$plug_dst"
+    fi
+
+    # Same sync, for the hover-description/linemode UI hooks. init.lua's stub
+    # dofiles this exact path -- see init-snippet.lua's own header.
+    if [[ ! -f "$ui_dst" ]] || [[ "$ui_src" -nt "$ui_dst" ]]; then
+        mkdir -p "$(dirname "$ui_dst")"
+        cp "$ui_src" "$ui_dst"
     fi
 
     # shellcheck source=yazi-selector/build-index.sh
