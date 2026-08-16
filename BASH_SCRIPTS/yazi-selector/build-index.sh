@@ -13,11 +13,19 @@
 #   ├── stamp        staleness marker
 #   ├── index.tsv    kind⇥name⇥realpath⇥line⇥cachepath  (debugging aid only)
 #   ├── index.lua    same data + descriptions.json, dofile'd by the Lua side
+#   ├── aliases.txt  raw `alias -p` output, written by aliases.sh's
+#   │                x-script-selector-yazi()/-insert() -- NOT by this file,
+#   │                see the note above step 1 below -- and read by
+#   │                build-history.sh's "By Tool" grouping so a command run
+#   │                as `lg` or `ccfast` still files under lazygit / claude,
+#   │                not under the alias name itself.
 #   └── tree/
 #       ├── Command History/   EMPTY here -- populated lazily, on first entry,
 #       │                      by build-history.sh (see plugin/main.lua). Kept
 #       │                      empty at this stage so `xy` startup cost never
 #       │                      grows with how much history you've accumulated.
+#       │                      NOT touched by a functions/scripts rebuild --
+#       │                      see the targeted removal in step 1 below.
 #       ├── Functions/   one generated file per bash function (real source)
 #       └── Scripts/     verbatim copies of BASH_SCRIPTS/**/*.sh
 
@@ -41,15 +49,33 @@ _bash_selector_build_index() {
 
     echo "🔄  Rebuilding bash-selector cache..." >&2
 
-    rm -rf "$cache"
-    # "Command History" is created empty -- build-history.sh populates it
-    # lazily the first time it's entered in Yazi (see plugin/main.lua), and
-    # its own staleness stamp (history-stamp) lives right here, so wiping the
-    # whole cache on a functions/scripts change just means the very next
-    # "Command History" visit rebuilds it once more -- cheap, and correct.
+    # Targeted removal, NOT `rm -rf "$cache"`: Functions/ and Scripts/ (plus
+    # index.tsv/index.lua, both rewritten below with `>`/`: >` regardless) are
+    # what actually go stale on a functions/scripts change. Command History/,
+    # history.lua and history-stamp must survive it -- they're independently
+    # staleness-gated by build-history.sh against the history log, not against
+    # this repo's .sh files, so a functions/scripts rebuild has nothing to do
+    # with them. Previously this did `rm -rf "$cache"`, which forced a full
+    # history rebuild (felt time -- see build-history.sh's own header) on the
+    # very next "Command History" visit after ANY .sh edit anywhere in the
+    # repo -- routine, not rare, while actively working on this repo.
+    rm -rf "$cache/tree/Functions" "$cache/tree/Scripts"
     mkdir -p "$cache/tree/Command History" "$cache/tree/Functions" "$cache/tree/Scripts"
     local idx="$cache/index.tsv"
     : > "$idx"
+
+    # NOTE on the alias map ($cache/aliases.txt): NOT dumped here. This
+    # function looks like the natural place for `alias -p`, but it isn't one
+    # -- x-script-selector-yazi() (aliases.sh) invokes x-script-selector-
+    # YAZI.sh by PATH (`"$SCRIPTS_DIR/...sh" "$@"`), which execs a FRESH,
+    # non-interactive bash subprocess; THIS function then gets `source`d
+    # INSIDE that subprocess. Aliases never cross a process boundary in bash
+    # (confirmed: `bash -c 'alias -p'` from a shell with aliases set prints
+    # nothing) -- `alias -p` here would always see zero aliases, silently
+    # defeating the entire point. The dump has to happen one level up, in the
+    # actual interactive shell -- see x-script-selector-yazi() and
+    # x-script-selector-yazi-insert() in aliases.sh, both of which write
+    # $cache/aliases.txt immediately before invoking this script.
 
     # ---- 1. extract every top-level function's source into its own file ----
     # Start regex mirrors function_list_all_table() in _general-functions.sh.

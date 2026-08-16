@@ -23,7 +23,19 @@ alias {scripts,x,X}='$SCRIPTS_DIR/x-script-selector.sh'
 # Must be a FUNCTION, not a plain alias: x-script-selector-YAZI.sh writes the chosen
 # command to $BASH_SELECTOR_CMD, and we `source` it HERE so any `cd`/env changes made
 # by the selected function/script persist in THIS shell instead of a subshell.
+#
+# The `alias -p` dump below has to happen HERE, not inside build-index.sh: that file
+# gets `source`d from WITHIN x-script-selector-YAZI.sh, which this function invokes
+# by path -- a fresh, non-interactive bash subprocess. Aliases never cross a process
+# boundary in bash (confirmed: `bash -c 'alias -p'` from a shell with aliases set
+# prints nothing), so `alias -p` run one level down would always see zero aliases.
+# This is what lets Command History's "By Tool" grouping (build-history.sh) resolve
+# `lg`/`ccfast`/etc. back to lazygit/claude instead of filing them under the alias
+# name itself. Cheap (~1000 aliases would still be well under a millisecond) and
+# harmless to redo on every invocation -- no staleness check needed.
 x-script-selector-yazi() {
+    mkdir -p "$HOME/.cache/bash-selector"
+    alias -p > "$HOME/.cache/bash-selector/aliases.txt" 2> /dev/null
     export BASH_SELECTOR_CMD="${TMPDIR:-/tmp}/bash-selector-cmd.$$"
     : > "$BASH_SELECTOR_CMD"
     "$SCRIPTS_DIR/x-script-selector-YAZI.sh" "$@"
@@ -40,6 +52,10 @@ alias {yscripts,xy,XY}='x-script-selector-yazi'
 # pressing Enter yourself. BASH_SELECTOR_INSERT tells x-script-selector-YAZI.sh
 # to skip its own "type args" sub-prompt and leave a trailing space instead.
 x-script-selector-yazi-insert() {
+    # See x-script-selector-yazi() above for why this dump has to happen here
+    # and not inside build-index.sh.
+    mkdir -p "$HOME/.cache/bash-selector"
+    alias -p > "$HOME/.cache/bash-selector/aliases.txt" 2> /dev/null
     export BASH_SELECTOR_CMD="${TMPDIR:-/tmp}/bash-selector-cmd.$$"
     export BASH_SELECTOR_INSERT=1
     : > "$BASH_SELECTOR_CMD"

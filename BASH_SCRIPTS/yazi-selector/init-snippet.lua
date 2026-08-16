@@ -12,12 +12,15 @@
 -- Two separate tables, on purpose:
 --   DESCS -- functions + scripts, flat, loaded once eagerly from index.lua (cheap, small, and
 --           ready before the user can hover anything).
---   HIST  -- Command History, NESTED as { recent = {...}, frequent = {...} }, loaded lazily.
---           Nested because Recent/ and Frequent/ genuinely share filenames (your newest command
---           is often also a frequent one) -- a flat merge would let one view's display data
---           silently win for both. Lazy because history.lua doesn't exist until build-history.sh
---           has run at least once (triggered on first entry into "Command History" by
---           plugin/main.lua, not at Yazi startup).
+--   HIST  -- Command History, NESTED as { recent = {...}, frequent = {...}, bytool = {...},
+--           bytool_dirs = {...} }, loaded lazily. recent/frequent/bytool stay separate because
+--           Recent/, Frequent/, and every "By Tool/<tool>/" folder genuinely share filenames
+--           (your newest command is often also a frequent one, and the same piped command files
+--           under more than one tool) -- a flat merge would let one view's display data silently
+--           win for the others. bytool_dirs is keyed by bare tool name (no rank prefix), one
+--           entry per "By Tool/<tool>" folder ROW itself, not per command inside it. Lazy because
+--           history.lua doesn't exist until build-history.sh has run at least once (triggered on
+--           first entry into "Command History" by plugin/main.lua, not at Yazi startup).
 local CACHE = os.getenv("BASH_SELECTOR_CACHE")
 
 local DESCS = {}
@@ -33,13 +36,18 @@ if CACHE then
 	end
 end
 
-local HIST = { recent = {}, frequent = {} }
+local HIST = { recent = {}, frequent = {}, bytool = {}, bytool_dirs = {} }
 local HIST_LAST_TRY = 0 -- os.time() of the last history.lua reload attempt; throttles re-parsing
 -- a genuinely unknown filename (e.g. a row from a since-superseded rank) to at most once/second.
 
--- Which view a row belongs to, from its PARENT DIRECTORY -- never the filename, which the two
--- views can share (see above). Handles both path separator styles defensively, matching the same
--- check plugin/main.lua's history_view() already makes.
+-- Which view a row belongs to, from its PARENT DIRECTORY -- never the filename, which every one
+-- of these views can share (see above). Handles both path separator styles defensively, matching
+-- the same checks plugin/main.lua's history_view() already makes.
+--
+-- Two "By Tool" cases, distinguished purely by parent DEPTH, checked in this order because the
+-- first pattern is a strict prefix of the second and would otherwise never get a turn:
+--   ".../By Tool"          -- the row itself IS a tool folder      -> bytool_dirs
+--   ".../By Tool/<tool>"   -- the row is a ranked command file     -> bytool
 local function view_of(url)
 	if not CACHE or not url then
 		return nil
@@ -50,6 +58,12 @@ local function view_of(url)
 	end
 	if p:match("[/\\]Recent$") then
 		return "recent"
+	end
+	if p:match("[/\\]By Tool$") then
+		return "bytool_dirs"
+	end
+	if p:match("[/\\]By Tool[/\\][^/\\]+$") then
+		return "bytool"
 	end
 	return nil
 end
@@ -69,7 +83,12 @@ local function hist_entry(view, name)
 	HIST_LAST_TRY = now
 	local ok, t = pcall(dofile, CACHE .. "/history.lua")
 	if ok and type(t) == "table" then
-		HIST = { recent = t.recent or {}, frequent = t.frequent or {} }
+		HIST = {
+			recent = t.recent or {},
+			frequent = t.frequent or {},
+			bytool = t.bytool or {},
+			bytool_dirs = t.bytool_dirs or {},
+		}
 	end
 	return HIST[view][name]
 end

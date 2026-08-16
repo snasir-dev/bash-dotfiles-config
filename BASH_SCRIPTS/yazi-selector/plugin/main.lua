@@ -55,7 +55,7 @@ local function load_index()
 			INDEX = t
 		end
 		local hok, hist = pcall(dofile, cache .. "/history.lua")
-		INDEX.history = (hok and type(hist) == "table") and hist or { recent = {}, frequent = {} }
+		INDEX.history = (hok and type(hist) == "table") and hist or { recent = {}, frequent = {}, bytool = {}, bytool_dirs = {} }
 	end
 	return INDEX
 end
@@ -78,15 +78,23 @@ local function refresh_history_index()
 	end
 end
 
--- Which view (Recent vs Frequent) is currently being browsed, from the
--- current directory path -- NOT from the filename, which the two views can
--- share. Handles both path separator styles defensively.
+-- Which view (Recent / Frequent / a "By Tool/<tool>" folder) is currently
+-- being browsed, from the current directory path -- NOT from the filename,
+-- which any of these can share (a piped command sits in more than one tool
+-- folder; see build-history.sh). Handles both path separator styles
+-- defensively. Deliberately does NOT match bare ".../By Tool" itself: that
+-- row set is tool-name FOLDERS, not executable history entries -- they fall
+-- through to the generic is_dir branch below like any other directory, no
+-- resolve() support needed.
 local function history_view(cwd)
 	if cwd:match("[/\\]Frequent$") then
 		return "frequent"
 	end
 	if cwd:match("[/\\]Recent$") then
 		return "recent"
+	end
+	if cwd:match("[/\\]By Tool[/\\][^/\\]+$") then
+		return "bytool"
 	end
 	return nil
 end
