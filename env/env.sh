@@ -2,6 +2,15 @@
 # ENV VARIABLES
 #*******************************
 
+# ======= NO_COLOR GUARD =======
+# A long-lived GUI launcher (PowerToys, Warp, VS Code, ...) started from an agent/terminal shell
+# inherits that shell's environment - including NO_COLOR=1, which Claude Code and other tools export
+# deliberately for their own plain-text subprocess output - and then keeps handing that same stale
+# environment to everything it launches afterwards, for as long as it stays running. That silences
+# color in every tool that honours NO_COLOR (lazygit, yazi, delta, starship, Claude Code itself).
+# Strip it here so an *interactive* shell never carries it forward, no matter how it was launched.
+unset NO_COLOR
+
 # Important:
 # All XDG Compliant Tools will set the following directory as their home. (Lazygit, Thef***, etc.)
 export XDG_CONFIG_HOME="$HOME/.config"
