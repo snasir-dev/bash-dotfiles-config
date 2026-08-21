@@ -55,7 +55,14 @@ claude() {
     case "$1" in
         # Management subcommands + informational flags -> run stock, no injection.
         # Keep this list in sync with the "Commands:" section of `claude --help`.
-        agents | auth | auto-mode | doctor | gateway | import | install | mcp | plugin | plugins | project | setup-token | ultrareview | update | upgrade | -h | --help | -v | --version)
+        # NOTE: 'attach' does NOT appear in that Commands section (confirmed via
+        # `claude attach --help`, which works despite being undocumented there) --
+        # it still needs to be listed here since it never starts a NEW session, it
+        # opens an already-running background one in this terminal. Without this,
+        # our injected flags land on it as trailing garbage: `claude attach <id>`
+        # would warn "extra arguments ignored: --permission-mode plan
+        # --allow-dangerously-skip-permissions" instead of attaching cleanly.
+        agents | attach | auth | auto-mode | doctor | gateway | import | install | mcp | plugin | plugins | project | setup-token | ultrareview | update | upgrade | -h | --help | -v | --version)
             command claude "$@"
             ;;
         # Everything else starts a session -> inject our preferred defaults.
@@ -102,6 +109,13 @@ alias {claude-default,ccdefault}='command claude'
 #                               of falling through to the stock default
 # shellcheck disable=SC2139
 alias {claude-fast,ccfast}='MAX_THINKING_TOKENS=0 command claude --model sonnet --effort medium --permission-mode auto'
+
+# SESSION SWITCHER: fuzzy-pick any live Claude Code session (interactive or
+# background, across ALL projects on this machine) and attach/resume it in place --
+# no need to open fullscreen agent view (`claude agents`) first. See
+# BASH_SCRIPTS/x-claude-sessions.sh for the implementation.
+# shellcheck disable=SC2139
+alias {ccfzf,ccs,claude-sessions}='$BASH_DIR/BASH_SCRIPTS/x-claude-sessions.sh'
 
 # --- COMPLETIONS ---
 
