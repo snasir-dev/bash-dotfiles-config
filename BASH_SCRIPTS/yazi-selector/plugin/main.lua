@@ -99,32 +99,57 @@ local function history_view(cwd)
 	return nil
 end
 
--- Resolve a hovered filename to (kind, realpath, line, invoke). Functions and
--- scripts never share a name in this repo, so a plain name lookup is enough.
--- `invoke` is the real, callable bash identifier: for functions this differs
--- from `name` (the cache file is "largest.sh" so Yazi/syntect highlight it,
--- but the actual function is "largest"); for scripts `name` already IS the
--- real, runnable filename, so `invoke` is just that same value, unused. For
--- history, `invoke` carries the command TEXT, still in its app-level-escaped
--- form (see bash-history-log.sh) -- x-script-selector-YAZI.sh decodes it
--- right before use, in exactly one place, because the decode is single-pass
--- and order-sensitive (a naive multi-pass sed/gsub unescape is ambiguous
--- whenever a literal backslash in the original command precedes an 'n' or
--- 't', e.g. `printf "\n"` -- see that script for the full reasoning).
+-- Placeholder `desc` build-index.sh writes into index.lua when an entry has
+-- no description in descriptions.json (see its `default_desc` local). Kept
+-- in sync by hand -- pick_desc() below treats it as "no description", the
+-- same way an empty string is treated, so the "what just ran" banner in
+-- x-script-selector-YAZI.sh can skip its Desc: row instead of printing this.
+local NO_DESC_PLACEHOLDER = "(no description yet -- add one to yazi-selector/descriptions.json)"
+
+-- Picks the short hover/banner description for a functions|scripts index
+-- entry: prefer the deliberately-short description_linemode_col (written
+-- for Yazi's right-column linemode -- see init-snippet.lua), falling back
+-- to the longer desc UNLESS it's still just the unfilled-in placeholder.
+local function pick_desc(e)
+	if e.description_linemode_col and e.description_linemode_col ~= "" then
+		return e.description_linemode_col
+	end
+	if e.desc and e.desc ~= "" and e.desc ~= NO_DESC_PLACEHOLDER then
+		return e.desc
+	end
+	return ""
+end
+
+-- Resolve a hovered filename to (kind, realpath, line, invoke, desc, params).
+-- Functions and scripts never share a name in this repo, so a plain name
+-- lookup is enough. `invoke` is the real, callable bash identifier: for
+-- functions this differs from `name` (the cache file is "largest.sh" so
+-- Yazi/syntect highlight it, but the actual function is "largest"); for
+-- scripts `name` already IS the real, runnable filename, so `invoke` is just
+-- that same value, unused. For history, `invoke` carries the command TEXT,
+-- still in its app-level-escaped form (see bash-history-log.sh) --
+-- x-script-selector-YAZI.sh decodes it right before use, in exactly one
+-- place, because the decode is single-pass and order-sensitive (a naive
+-- multi-pass sed/gsub unescape is ambiguous whenever a literal backslash in
+-- the original command precedes an 'n' or 't', e.g. `printf "\n"` -- see
+-- that script for the full reasoning). `desc`/`params` feed the "what just
+-- ran" banner x-script-selector-YAZI.sh prints before running the command --
+-- history entries carry neither (raw history has no metadata), so both come
+-- back empty for that kind.
 local function resolve(name, cwd)
 	local idx = load_index()
 	if idx.functions and idx.functions[name] then
 		local e = idx.functions[name]
-		return "functions", e.realpath, e.line, e.invoke
+		return "functions", e.realpath, e.line, e.invoke, pick_desc(e), e.params or ""
 	end
 	if idx.scripts and idx.scripts[name] then
 		local e = idx.scripts[name]
-		return "scripts", e.realpath, e.line, name
+		return "scripts", e.realpath, e.line, name, pick_desc(e), e.params or ""
 	end
 	local view = history_view(cwd)
 	if view and idx.history and idx.history[view] and idx.history[view][name] then
 		local e = idx.history[view][name]
-		return "history", e.cwd or "", 0, e.cmd
+		return "history", e.cwd or "", 0, e.cmd, "", ""
 	end
 	return nil
 end
@@ -166,7 +191,7 @@ return {
 			return
 		end
 
-		local kind, realpath, line, invoke = resolve(name, cwd)
+		local kind, realpath, line, invoke, desc, params = resolve(name, cwd)
 		if not kind then
 			return -- hovering something outside the generated index; ignore
 		end
@@ -197,11 +222,27 @@ return {
 			action = actions[idx]
 		end
 
+		-- Sanitize desc/params before writing: $out is a strict line-based
+		-- handoff (x-script-selector-YAZI.sh reads it with 7 sequential
+		-- `read -r` calls), so a stray newline from descriptions.json would
+		-- desync every field after it. Collapse CR/LF to a space instead.
+		local function flatten(s)
+			return (s or ""):gsub("[\r\n]", " ")
+		end
+
 		local out = os.getenv("BASH_SELECTOR_OUT")
 		if out then
 			local f = io.open(out, "wb")
 			if f then
-				f:write(table.concat({ action, kind, invoke, realpath, tostring(line) }, "\n") .. "\n")
+				f:write(table.concat({
+					action,
+					kind,
+					invoke,
+					realpath,
+					tostring(line),
+					flatten(desc),
+					flatten(params),
+				}, "\n") .. "\n")
 				f:close()
 			end
 		end

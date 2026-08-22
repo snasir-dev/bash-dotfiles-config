@@ -30,6 +30,75 @@
 # Usage: x-script-selector-YAZI.sh [--rebuild]
 #   --rebuild   force the cache to regenerate even if nothing looks stale.
 
+# Shortens a realpath for display in the "what just ran" banner (see
+# _bash_selector_banner() below): strips the $BASH_DIR/ prefix so repo files
+# show as "functions/foo.sh" instead of a full Windows path, else collapses
+# $HOME to "~". Functions additionally get ":$line" appended (scripts are
+# always cached at line 1, so it'd be pure noise there).
+_bash_selector_display_path() {
+    local kind="$1" realpath="$2" line="$3"
+    local shortened="$realpath"
+    if [[ -n "$BASH_DIR" && "$shortened" == "$BASH_DIR"/* ]]; then
+        shortened="${shortened#"$BASH_DIR"/}"
+    elif [[ -n "$HOME" && "$shortened" == "$HOME"/* ]]; then
+        shortened="~/${shortened#"$HOME"/}"
+    fi
+    [[ "$kind" == "functions" ]] && shortened="$shortened:$line"
+    printf '%s' "$shortened"
+}
+
+# Prints a compact "what's about to run" banner immediately before a
+# function/script/history selection executes, so scrollback always makes
+# clear WHICH command produced the output that follows it. This is the
+# whole point: short, similar-looking path-jump functions/abbreviations are
+# otherwise indistinguishable after the fact -- and a bare `cd`-style
+# function prints NOTHING of its own, so without this the scrollback record
+# is just a blank prompt.
+#
+# Colors are defined LOCALLY, not sourced from tools/development/git.sh's
+# BOLD_ORANGE: `xy` invokes this script BY PATH (aliases.sh), so it runs as
+# a fresh, non-interactive bash subprocess that never sees anything only
+# exported to interactive shells. Same pattern as function_list_all_table()
+# in functions/_general-functions.sh ("Color definitions matching git.sh
+# styling"). Respects NO_COLOR (see env/env.sh's interactive-shell guard)
+# and falls back to plain text when stdout isn't a terminal.
+#
+# Args: label display meta_label meta_value desc
+#   label        "Function" / "Script" / "History"
+#   display      the exact callable text about to run (typed args included)
+#   meta_label   "Path" or "Dir" -- pass "" (with meta_value "") to omit the row
+#   meta_value   the already-shortened path/dir value
+#   desc         one-line description, or "" to omit the Desc: row
+_bash_selector_banner() {
+    local label="$1" display="$2" meta_label="$3" meta_value="$4" desc="$5"
+
+    local BOLD_ORANGE DIM RESET
+    if [[ -n "$NO_COLOR" || ! -t 1 ]]; then
+        BOLD_ORANGE=""
+        DIM=""
+        RESET=""
+    else
+        BOLD_ORANGE='\033[1;38;2;249;179;0m' # matches tools/development/git.sh's BOLD_ORANGE
+        DIM='\033[2m'
+        RESET='\033[0m'
+    fi
+
+    # Repeat-character rule via `printf '─%.0s' {1..N}`, same technique
+    # build-index.sh:202 uses for its own 60-char '=' separator.
+    local rule
+    rule="── xy · x-script-selector-YAZI $(printf '─%.0s' {1..28})"
+
+    echo -e "\n${DIM}${rule}${RESET}"
+    echo -e "${BOLD_ORANGE}$(printf '%-11s' "${label}:")${RESET}${display}"
+    if [[ -n "$meta_label" && -n "$meta_value" ]]; then
+        echo -e "${BOLD_ORANGE}$(printf '%-11s' "${meta_label}:")${RESET}${DIM}${meta_value}${RESET}"
+    fi
+    if [[ -n "$desc" ]]; then
+        echo -e "${BOLD_ORANGE}$(printf '%-11s' "Desc:")${RESET}${DIM}${desc}${RESET}"
+    fi
+    echo -e "${BOLD_ORANGE}$(printf '%-11s' "Output:")${RESET}"
+}
+
 x-script-selector-YAZI() {
     local sel_dir="$BASH_DIR/BASH_SCRIPTS/yazi-selector"
     local cache="$HOME/.cache/bash-selector"
@@ -81,13 +150,15 @@ x-script-selector-YAZI() {
         return 0
     fi
 
-    local action kind invoke realpath line
+    local action kind invoke realpath line desc params
     {
         read -r action
         read -r kind
         read -r invoke
         read -r realpath
         read -r line
+        read -r desc
+        read -r params
     } < "$out"
 
     # `kind` (not `realpath`) is the right emptiness check here: a history
@@ -162,6 +233,14 @@ x-script-selector-YAZI() {
         cd)
             # kind=history only (see plugin/main.lua's ACTIONS_HISTORY).
             local cmd="cd \"$realpath\" 2>/dev/null; $invoke"
+            # Banner skipped under Alt+G (BASH_SELECTOR_INSERT): this action
+            # is reachable from the insert widget too, and printing here would
+            # corrupt the prompt-line splice x-script-selector-yazi-insert()
+            # builds from $BASH_SELECTOR_CMD's contents (see aliases.sh).
+            if [[ -z "$BASH_SELECTOR_INSERT" ]]; then
+                _bash_selector_banner "History" "$invoke" "Dir" \
+                    "$(_bash_selector_display_path "history" "$realpath" "$line")" ""
+            fi
             if [[ -n "$BASH_SELECTOR_CMD" ]]; then
                 printf '%s\n' "$cmd" > "$BASH_SELECTOR_CMD"
             else
@@ -208,17 +287,63 @@ x-script-selector-YAZI() {
                 fi
                 [[ "$action" == "args" ]] && cmd="$cmd "
             else
+                local display
                 if [[ "$kind" == "functions" ]]; then
                     cmd="source \"$realpath\" >/dev/null 2>&1; $invoke"
+                    display="$invoke"
                 elif [[ "$kind" == "history" ]]; then
                     cmd="$invoke"
+                    display="$invoke"
                 else
                     cmd="\"$realpath\""
+                    display="$(basename "$realpath")"
                 fi
                 if [[ "$action" == "args" ]]; then
-                    local extra
-                    read -r -e -p "▶  ${invoke:-$(basename "$realpath")} " extra
-                    [[ -n "$extra" ]] && cmd="$cmd $extra"
+                    local extra prompt_text
+                    prompt_text="${invoke:-$(basename "$realpath")}"
+                    # Params hint (from descriptions.json, via index.lua) prints
+                    # as its OWN plain informational line -- NOT appended into
+                    # the read -p prompt itself. Folding it into the prompt
+                    # ("▶  largest  [count=10]  ▶ ") read as a second command
+                    # to retype in full, so typing just the arg (e.g. "10")
+                    # after it actually typed "largest 10" -- doubling the
+                    # function name into the command. The prompt below is
+                    # therefore byte-identical to what it always was: cursor
+                    # lands right after the name, type only the argument.
+                    if [[ -n "$params" ]]; then
+                        local BOLD_ORANGE DIM RESET
+                        if [[ -n "$NO_COLOR" || ! -t 1 ]]; then
+                            BOLD_ORANGE=""
+                            DIM=""
+                            RESET=""
+                        else
+                            BOLD_ORANGE='\033[1;38;2;249;179;0m' # matches tools/development/git.sh's BOLD_ORANGE
+                            DIM='\033[2m'
+                            RESET='\033[0m'
+                        fi
+                        echo -e "${BOLD_ORANGE}Params:${RESET} ${DIM}${params}${RESET}"
+                    fi
+                    read -r -e -p "▶  $prompt_text " extra
+                    if [[ -n "$extra" ]]; then
+                        cmd="$cmd $extra"
+                        display="$display $extra"
+                    fi
+                fi
+
+                # "What just ran" banner -- see _bash_selector_banner() above.
+                # History carries no source path/description of its own (raw
+                # history has neither), so both rows are simply omitted there.
+                local label
+                case "$kind" in
+                    functions) label="Function" ;;
+                    history) label="History" ;;
+                    *) label="Script" ;;
+                esac
+                if [[ "$kind" == "history" ]]; then
+                    _bash_selector_banner "$label" "$display" "" "" ""
+                else
+                    _bash_selector_banner "$label" "$display" "Path" \
+                        "$(_bash_selector_display_path "$kind" "$realpath" "$line")" "$desc"
                 fi
             fi
             if [[ -n "$BASH_SELECTOR_CMD" ]]; then
