@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # Have added this script to PATH. Can directly call the script by just stating "x-claude-sessions".
-# Also have aliases for it (ccfzf / ccs / claude-sessions) in tools/ai/claude-code.sh.
+# Also have aliases for it (ccfzf / claudefzf / ccs / claude-sessions) in tools/ai/claude-code.sh.
 # Root-level (not in a subfolder) so it ranks above deeper scripts in the "x" picker,
 # which sorts fd results by folder depth (see x-script-selector.sh).
 

@@ -115,7 +115,7 @@ alias {claude-fast,ccfast}='MAX_THINKING_TOKENS=0 command claude --model sonnet 
 # no need to open fullscreen agent view (`claude agents`) first. See
 # BASH_SCRIPTS/x-claude-sessions.sh for the implementation.
 # shellcheck disable=SC2139
-alias {ccfzf,ccs,claude-sessions}='$BASH_DIR/BASH_SCRIPTS/x-claude-sessions.sh'
+alias {ccfzf,claudefzf,ccs,claude-sessions}='$BASH_DIR/BASH_SCRIPTS/x-claude-sessions.sh'
 
 # --- COMPLETIONS ---
 
