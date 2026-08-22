@@ -3,11 +3,12 @@
 -- selector. Only active when launched by that script (BASH_SELECTOR_CACHE set); otherwise both
 -- hooks below return "", matching normal Yazi's previous behavior exactly (linemode = "none").
 --
--- This file is VERSIONED here (not hand-pasted into ~/.config/yazi/init.lua) and auto-copied to
--- $YAZI_CONFIG_HOME/bash-selector-ui.lua by x-script-selector-YAZI.sh on every `xy` invocation --
--- same sync pattern that script already uses for plugin/main.lua. init.lua itself only keeps a
--- two-line stub that dofiles the copy. See BASH_SCRIPTS/yazi-selector/ -- descriptions.json is
--- the file to edit for functions/scripts; build-history.sh is what produces history.lua.
+-- This file is VERSIONED here (not hand-pasted into ~/.config/yazi/init.lua) and SYMLINKED to
+-- $YAZI_CONFIG_HOME/bash-selector-ui.lua -- same @create-symlinks.ps1 entry (in the DOTFILES/
+-- shared-resources repo) that links bash-selector-plugin/main.lua, set up ONCE per machine, not
+-- by x-script-selector-YAZI.sh. init.lua itself only keeps a two-line stub that dofiles the
+-- link. See BASH_SCRIPTS/yazi-selector/ -- descriptions.json is the file to edit for
+-- functions/scripts; build-history.sh is what produces history.lua.
 --
 -- Two separate tables, on purpose:
 --   DESCS -- functions + scripts, flat, loaded once eagerly from index.lua (cheap, small, and
@@ -20,7 +21,7 @@
 --           win for the others. bytool_dirs is keyed by bare tool name (no rank prefix), one
 --           entry per "By Tool/<tool>" folder ROW itself, not per command inside it. Lazy because
 --           history.lua doesn't exist until build-history.sh has run at least once (triggered on
---           first entry into "Command History" by plugin/main.lua, not at Yazi startup).
+--           first entry into "Command History" by bash-selector-plugin/main.lua, not at Yazi startup).
 local CACHE = os.getenv("BASH_SELECTOR_CACHE")
 
 local DESCS = {}
@@ -42,7 +43,7 @@ local HIST_LAST_TRY = 0 -- os.time() of the last history.lua reload attempt; thr
 
 -- Which view a row belongs to, from its PARENT DIRECTORY -- never the filename, which every one
 -- of these views can share (see above). Handles both path separator styles defensively, matching
--- the same checks plugin/main.lua's history_view() already makes.
+-- the same checks bash-selector-plugin/main.lua's history_view() already makes.
 --
 -- Two "By Tool" cases, distinguished purely by parent DEPTH, checked in this order because the
 -- first pattern is a strict prefix of the second and would otherwise never get a turn:

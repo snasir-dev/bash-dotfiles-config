@@ -18,13 +18,13 @@
 #                                            `alias -p` -- see command_tools().
 #
 # plus $HOME/.cache/bash-selector/history.lua, dofile'd by both
-# plugin/main.lua (to resolve a hovered entry back to its real command) and
+# bash-selector-plugin/main.lua (to resolve a hovered entry back to its real command) and
 # ~/.config/yazi/init.lua (to render the right-column linemode + hover line --
 # merged straight into the same BASH_SELECTOR_DESCS table functions/scripts
 # already populate, so no new display code path is needed there).
 #
 # Invoked LAZILY -- only the first time "Command History" is entered in Yazi
-# (see plugin/main.lua) -- so opening `xy` itself never gets slower as your
+# (see bash-selector-plugin/main.lua) -- so opening `xy` itself never gets slower as your
 # history grows.
 #
 # PERFORMANCE: parsing, aggregating, frecency scoring, both rankings, filename
@@ -104,7 +104,7 @@ _bash_history_build() {
         -F'\t' '
     # ---- alias map (crosses the bash/awk process boundary) --------------
     # build-history.sh runs as a separate, non-interactive bash process
-    # (shelled out to by plugin/main.lua), so it cannot see the caller'"'"'s
+    # (shelled out to by bash-selector-plugin/main.lua), so it cannot see the caller'"'"'s
     # aliases directly -- aliasfile is how build-index.sh'"'"'s `alias -p` dump
     # gets here. FNR==NR is only true while reading the FIRST file below
     # (aliasfile); once the log file starts, FNR resets to 1 while NR keeps

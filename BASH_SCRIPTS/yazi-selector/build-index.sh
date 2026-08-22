@@ -21,7 +21,7 @@
 #   │                not under the alias name itself.
 #   └── tree/
 #       ├── Command History/   EMPTY here -- populated lazily, on first entry,
-#       │                      by build-history.sh (see plugin/main.lua). Kept
+#       │                      by build-history.sh (see bash-selector-plugin/main.lua). Kept
 #       │                      empty at this stage so `xy` startup cost never
 #       │                      grows with how much history you've accumulated.
 #       │                      NOT touched by a functions/scripts rebuild --
