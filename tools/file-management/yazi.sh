@@ -24,12 +24,25 @@ export YAZI_CONFIG_HOME="$HOME/.config/yazi"
 # --- FUNCTIONS ---
 # 'y' shell wrapper that provides the ability to change the current working directory when exiting Yazi.
 # Link to Official Docs (where I got this from): https://yazi-rs.github.io/docs/quick-start#shell-wrapper
+#
+# GUARD: must stay ABOVE the function definition. Bash expands aliases at PARSE time, so on any
+# re-source of this file (`r`/`reload`/`src`/`source ~/.bashrc`) the `alias yazi='y'` below would
+# be substituted into y()'s own body, making it call itself forever and hang the shell. Dropping
+# the alias here first restores first-source conditions on every source. See also `command` below
+# -- this and that are two INDEPENDENT guards against the same failure; keep both.
+unalias yazi 2> /dev/null || true
+
 function y() {
-    local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
-    yazi "$@" --cwd-file="$tmp"
+    local tmp cwd
+    tmp="$(mktemp -t "yazi-cwd.XXXXXX")"
+    # Cleanup on EVERY exit path, not just the happy one -- `rm -f` as the last line here used to
+    # leak a temp file whenever Yazi was interrupted (e.g. Ctrl-C) instead of exited normally.
+    trap 'rm -f -- "$tmp"' RETURN
+    # `command` is LOAD-BEARING, not noise. It forces the real binary and keeps `yazi` out of
+    # command position so the alias below can never be expanded into this body. Do not remove.
+    command yazi "$@" --cwd-file="$tmp"
     IFS= read -r -d '' cwd < "$tmp"
     [ -n "$cwd" ] && [ "$cwd" != "$PWD" ] && builtin cd -- "$cwd"
-    rm -f -- "$tmp"
 }
 
 # Function to bootstrap Yazi config directory and empty files

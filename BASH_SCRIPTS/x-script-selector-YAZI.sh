@@ -149,7 +149,7 @@ x-script-selector-YAZI() {
     BASH_SELECTOR_OUT="$out" BASH_SELECTOR_CACHE="$cache" \
         BASH_SELECTOR_BASH="$(cygpath -w "$(command -v bash)")" \
         BASH_SELECTOR_HISTORY_SCRIPT="$(cygpath -w "$sel_dir/build-history.sh")" \
-        yazi "$cache/tree"
+        command yazi "$cache/tree"
 
     if [[ ! -s "$out" ]]; then
         echo "🚫 Nothing selected."
